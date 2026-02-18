@@ -212,7 +212,7 @@ async def responder_ia(autor, pergunta: str) -> str:
 # GERAÇÃO DE IMAGEM — Hugging Face
 # ==============================
 async def gerar_imagem(prompt: str) -> bytes | None:
-    url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    url = "url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0""
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     payload = {"inputs": prompt}
 
@@ -494,3 +494,4 @@ async def on_message(message):
 # START
 # ==============================
 bot.run(TOKEN)
+
