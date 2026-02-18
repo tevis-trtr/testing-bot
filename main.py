@@ -1,6 +1,7 @@
 import os
 import io
 import re
+import asyncio
 import aiohttp
 import discord
 from discord.ext import commands
@@ -133,11 +134,10 @@ async def enviar_resposta(destino, autor, texto: str):
             contagem[ext] += 1
             count = contagem[ext]
             nome = f"codigo_{count}.{ext}" if count > 1 else f"codigo.{ext}"
-            arquivo = discord.File(
+            arquivos.append(discord.File(
                 fp=io.BytesIO(codigo.encode("utf-8")),
                 filename=nome
-            )
-            arquivos.append(arquivo)
+            ))
 
         if texto_limpo:
             partes = [texto_limpo[i:i+1900] for i in range(0, len(texto_limpo), 1900)]
@@ -211,11 +211,39 @@ async def responder_ia(autor, pergunta: str) -> str:
 # ==============================
 async def gerar_imagem(prompt: str) -> bytes | None:
     prompt_encoded = quote(prompt)
-    url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=1024&nologo=true&enhance=true"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as resp:
-            if resp.status == 200:
-                return await resp.read()
+    url = (
+        f"https://image.pollinations.ai/prompt/{prompt_encoded}"
+        f"?width=1024&height=1024&model=flux&nologo=true&enhance=true&seed={int(datetime.now().timestamp())}"
+    )
+
+    tentativas = 3
+    for i in range(tentativas):
+        try:
+            print(f"[IMG] Tentativa {i+1}/3 | URL: {url[:80]}...")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=90),
+                    headers={"User-Agent": "DiscordBot/1.0"}
+                ) as resp:
+                    print(f"[IMG] Status: {resp.status}")
+                    if resp.status == 200:
+                        content_type = resp.headers.get("Content-Type", "")
+                        if "image" in content_type:
+                            return await resp.read()
+                        else:
+                            print(f"[IMG] Content-Type inesperado: {content_type}")
+                    else:
+                        texto_erro = await resp.text()
+                        print(f"[IMG] Erro {resp.status}: {texto_erro[:200]}")
+        except asyncio.TimeoutError:
+            print(f"[IMG] Timeout na tentativa {i+1}")
+        except Exception as e:
+            print(f"[IMG] Exceção na tentativa {i+1}: {e}")
+
+        if i < tentativas - 1:
+            await asyncio.sleep(5)
+
     return None
 
 # ==============================
@@ -262,10 +290,9 @@ async def ia_error(ctx, error):
 @bot.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def img(ctx, *, descricao: str):
-    msg = await ctx.send(f"🎨 {ctx.author.mention} Gerando imagem, aguarde...")
+    msg = await ctx.send(f"🎨 {ctx.author.mention} Gerando imagem, aguarde... (pode levar até 30s)")
     try:
-        async with ctx.typing():
-            imagem = await gerar_imagem(descricao)
+        imagem = await gerar_imagem(descricao)
 
         if imagem:
             arquivo = discord.File(fp=io.BytesIO(imagem), filename="imagem.png")
@@ -279,7 +306,10 @@ async def img(ctx, *, descricao: str):
             await msg.delete()
             await ctx.send(embed=embed, file=arquivo)
         else:
-            await msg.edit(content="❌ Não foi possível gerar a imagem. Tente novamente.")
+            await msg.edit(
+                content=f"❌ {ctx.author.mention} Não foi possível gerar a imagem após 3 tentativas. "
+                        f"Verifique o console para mais detalhes ou tente novamente em alguns segundos."
+            )
     except Exception as e:
         await msg.edit(content=f"❌ Erro ao gerar imagem: {e}")
 
@@ -409,7 +439,7 @@ async def ajuda(ctx):
         value=f"**{LIMITE_USOS} usos** a cada **{JANELA_HORAS}h** • Cooldown de **10s** entre mensagens • **30s** entre imagens",
         inline=False
     )
-    embed.set_footer(text=f"Modelo: {MODEL} • Imagens: Pollinations AI")
+    embed.set_footer(text=f"Modelo: {MODEL} • Imagens: Pollinations AI (flux)")
     await ctx.send(embed=embed)
 
 # ==============================
