@@ -15,6 +15,7 @@ from urllib.parse import quote
 # ==============================
 TOKEN = os.getenv("DISCORD_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 OWNER_ID = 1370869648819617803
 
 client_groq = Groq(api_key=GROQ_API_KEY)
@@ -167,6 +168,7 @@ async def enviar_resposta(destino, autor, texto: str):
 async def on_ready():
     print(f"🔥 Bot online como {bot.user}")
     print(f"📡 Modelo: {MODEL}")
+    print(f"🎨 HF Token: {'✅ configurado' if HF_TOKEN else '❌ não configurado'}")
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
@@ -207,24 +209,23 @@ async def responder_ia(autor, pergunta: str) -> str:
     return resposta
 
 # ==============================
-# GERAÇÃO DE IMAGEM — Pollinations AI
+# GERAÇÃO DE IMAGEM — Hugging Face
 # ==============================
 async def gerar_imagem(prompt: str) -> bytes | None:
-    prompt_encoded = quote(prompt)
-    url = (
-        f"https://image.pollinations.ai/prompt/{prompt_encoded}"
-        f"?width=1024&height=1024&model=flux&nologo=true&enhance=true&seed={int(datetime.now().timestamp())}"
-    )
+    url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    payload = {"inputs": prompt}
 
     tentativas = 3
     for i in range(tentativas):
         try:
-            print(f"[IMG] Tentativa {i+1}/3 | URL: {url[:80]}...")
+            print(f"[IMG] Tentativa {i+1}/3")
             async with aiohttp.ClientSession() as session:
-                async with session.get(
+                async with session.post(
                     url,
-                    timeout=aiohttp.ClientTimeout(total=90),
-                    headers={"User-Agent": "DiscordBot/1.0"}
+                    headers=headers,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=120)
                 ) as resp:
                     print(f"[IMG] Status: {resp.status}")
                     if resp.status == 200:
@@ -232,14 +233,22 @@ async def gerar_imagem(prompt: str) -> bytes | None:
                         if "image" in content_type:
                             return await resp.read()
                         else:
-                            print(f"[IMG] Content-Type inesperado: {content_type}")
+                            dados = await resp.json()
+                            print(f"[IMG] Resposta inesperada: {dados}")
+                    elif resp.status == 503:
+                        print("[IMG] Modelo carregando, aguardando 20s...")
+                        await asyncio.sleep(20)
+                        continue
+                    elif resp.status == 401:
+                        print("[IMG] ❌ HF_TOKEN inválido ou sem permissão!")
+                        return None
                     else:
-                        texto_erro = await resp.text()
-                        print(f"[IMG] Erro {resp.status}: {texto_erro[:200]}")
+                        texto = await resp.text()
+                        print(f"[IMG] Erro {resp.status}: {texto[:200]}")
         except asyncio.TimeoutError:
             print(f"[IMG] Timeout na tentativa {i+1}")
         except Exception as e:
-            print(f"[IMG] Exceção na tentativa {i+1}: {e}")
+            print(f"[IMG] Exceção: {e}")
 
         if i < tentativas - 1:
             await asyncio.sleep(5)
@@ -290,6 +299,9 @@ async def ia_error(ctx, error):
 @bot.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def img(ctx, *, descricao: str):
+    if not HF_TOKEN:
+        return await ctx.send("❌ HF_TOKEN não configurado. Adicione a variável no Railway.")
+
     msg = await ctx.send(f"🎨 {ctx.author.mention} Gerando imagem, aguarde... (pode levar até 30s)")
     try:
         imagem = await gerar_imagem(descricao)
@@ -302,13 +314,12 @@ async def img(ctx, *, descricao: str):
                 color=discord.Color.purple()
             )
             embed.set_image(url="attachment://imagem.png")
-            embed.set_footer(text=f"Gerado por {ctx.author.display_name} • Pollinations AI")
+            embed.set_footer(text=f"Gerado por {ctx.author.display_name} • Stable Diffusion XL")
             await msg.delete()
             await ctx.send(embed=embed, file=arquivo)
         else:
             await msg.edit(
-                content=f"❌ {ctx.author.mention} Não foi possível gerar a imagem após 3 tentativas. "
-                        f"Verifique o console para mais detalhes ou tente novamente em alguns segundos."
+                content=f"❌ {ctx.author.mention} Não foi possível gerar a imagem. Verifique o console para detalhes."
             )
     except Exception as e:
         await msg.edit(content=f"❌ Erro ao gerar imagem: {e}")
@@ -439,7 +450,7 @@ async def ajuda(ctx):
         value=f"**{LIMITE_USOS} usos** a cada **{JANELA_HORAS}h** • Cooldown de **10s** entre mensagens • **30s** entre imagens",
         inline=False
     )
-    embed.set_footer(text=f"Modelo: {MODEL} • Imagens: Pollinations AI (flux)")
+    embed.set_footer(text=f"Modelo: {MODEL} • Imagens: Stable Diffusion XL")
     await ctx.send(embed=embed)
 
 # ==============================
