@@ -4,7 +4,8 @@ import re
 import asyncio
 import aiohttp
 import discord
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from discord.ext import commands
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -16,8 +17,6 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OWNER_ID = 1370869648819617803
-
-genai.configure(api_key=GEMINI_API_KEY)
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -226,6 +225,7 @@ async def enviar_resposta(destino, autor, texto: str):
 async def on_ready():
     print(f"🔥 Bot online como {bot.user}")
     print(f"📡 Modelo: {MODEL}")
+    print(f"🔑 Gemini Key: {GEMINI_API_KEY[:10] if GEMINI_API_KEY else '❌ NÃO ENCONTRADA'}...")
     print(f"🎨 HF Token: {'✅ configurado' if HF_TOKEN else '❌ não configurado'}")
     await bot.change_presence(
         activity=discord.Activity(
@@ -235,7 +235,7 @@ async def on_ready():
     )
 
 # ==============================
-# IA PRINCIPAL — Google Gemini
+# IA PRINCIPAL — Google Gemini (novo SDK)
 # ==============================
 async def responder_ia(autor, pergunta: str) -> str:
     user_id = autor.id
@@ -248,21 +248,35 @@ async def responder_ia(autor, pergunta: str) -> str:
 
     memoria[user_id].append({"role": "user", "content": pergunta})
 
-    # Monta histórico no formato do Gemini
+    # Monta histórico no formato do novo SDK
     historico = []
     for msg in memoria[user_id][:-1]:
         role = "user" if msg["role"] == "user" else "model"
-        historico.append({"role": role, "parts": [msg["content"]]})
+        historico.append(types.Content(
+            role=role,
+            parts=[types.Part(text=msg["content"])]
+        ))
 
-    model = genai.GenerativeModel(
-        model_name=MODEL,
-        system_instruction=SYSTEM_PROMPT
+    # Adiciona a pergunta atual
+    historico.append(types.Content(
+        role="user",
+        parts=[types.Part(text=pergunta)]
+    ))
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    response = await asyncio.to_thread(
+        client.models.generate_content,
+        model=MODEL,
+        contents=historico,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            max_output_tokens=8192,
+            temperature=0.7,
+        )
     )
 
-    chat = model.start_chat(history=historico)
-    response = await asyncio.to_thread(chat.send_message, pergunta)
     resposta = response.text
-
     memoria[user_id].append({"role": "assistant", "content": resposta})
     logs_ia.append(
         f"[{datetime.now().strftime('%d/%m %H:%M:%S')}] {autor} ({autor.id}): {pergunta[:80]}"
