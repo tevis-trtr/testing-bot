@@ -55,12 +55,16 @@ REGRAS PARA CÓDIGO
 ═══════════════════════════════════════
 CRIAÇÃO DE SITES (HTML/CSS/JS)
 ═══════════════════════════════════════
-• Crie sites modernos, responsivos e visualmente impressionantes.
-• Use CSS avançado: gradientes, animações, glassmorphism, variáveis CSS.
-• JavaScript funcional e moderno (ES6+).
-• Design profissional com paleta de cores coerente.
-• Sempre adicione meta tags, favicon e estrutura semântica.
-• Mobile-first: tudo deve funcionar no celular.
+- Crie sites COMPLETOS em um único arquivo HTML com CSS e JS embutidos.
+- Design de nível profissional: use paletas modernas, tipografia elegante (Google Fonts), espaçamentos generosos.
+- CSS avançado obrigatório: variáveis CSS, flexbox/grid, animações, transições suaves, hover effects, glassmorphism ou neumorphism quando adequado.
+- Sempre use Google Fonts: importe no <head> fontes como Inter, Poppins, Raleway, etc.
+- Adicione animações de entrada nos elementos com @keyframes ou IntersectionObserver.
+- Navbar fixa com blur/glassmorphism, hero section impactante com gradiente, seções bem definidas, footer completo.
+- Botões com hover animado, cards com sombra e transição, inputs estilizados.
+- Totalmente responsivo: funciona perfeito no celular.
+- NUNCA use Bootstrap ou frameworks externos — CSS puro avançado apenas.
+- O resultado deve parecer um site de agência profissional, não um projeto escolar.
 
 ═══════════════════════════════════════
 LINGUAGENS QUE VOCÊ DOMINA
@@ -494,6 +498,7 @@ async def on_message(message):
 # START
 # ==============================
 bot.run(TOKEN)
+
 
 
 
