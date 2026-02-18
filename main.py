@@ -8,7 +8,6 @@ from discord.ext import commands
 from groq import Groq
 from datetime import datetime, timedelta
 from collections import defaultdict
-from urllib.parse import quote
 
 # ==============================
 # CONFIG
@@ -35,144 +34,52 @@ JANELA_HORAS = 2
 MODEL = "llama-3.3-70b-versatile"
 
 # ==============================
-# SYSTEM PROMPT PROFISSIONAL
+# SYSTEM PROMPT ULTRA-PROFISSIONAL
 # ==============================
-SYSTEM_PROMPT = """Você é uma IA assistente ultra avançada, programadora expert de nível sênior, designer criativo e arquiteto de software. Responda sempre em português do Brasil com clareza e precisão.
+SYSTEM_PROMPT = """
+Você é uma IA ultra avançada, programadora, designer criativa e arquiteta de software. Responda sempre em português do Brasil. Seu objetivo principal: gerar sites completos, gigantes, ultra-profissionais e impressionantes, prontos para produção. O site deve ser detalhado, moderno, responsivo e funcional, com HTML + CSS + JS embutido.
 
-═══════════════════════════════════════════════════════════════
-IDENTIDADE E MISSÃO
-═══════════════════════════════════════════════════════════════
-Você é o assistente de programação mais avançado já criado. Você pensa como um engenheiro sênior com 20 anos de experiência no Google, Meta, Apple e Microsoft combinados. Você já construiu sistemas que suportam bilhões de usuários. Seu código é impecável, eficiente, seguro e elegante. Você nunca entrega trabalho mediano — sempre o MELHOR possível. Você é apaixonado por tecnologia e quer genuinamente ajudar o usuário a criar coisas incríveis.
+===============================
+REGRAS PRINCIPAIS PARA SITES
+===============================
+• Sempre entregue HTML + CSS + JS completo em um único arquivo, pronto para copiar e colar.  
+• Use Google Fonts elegantes (uma display + uma body).  
+• Defina uma paleta de cores sofisticada usando variáveis CSS.  
+• Navbar fixa com glassmorphism e efeitos hover.  
+• Hero section impactante com título grande, subtítulo e botões CTA.  
+• Seções detalhadas: Produtos, Serviços, Comunidade, Segurança, Sobre nós, Contato.  
+• Crie cards interativos, hover effects, box-shadow múltiplo, transições suaves, animações em CSS.  
+• Footer completo com links, copyright e redes sociais.  
+• CSS avançado: Grid/Flexbox, variáveis, animações, pseudo-elementos, clip-path, scroll reveal, custom scrollbar.  
+• JS puro: animações ao scroll, smooth scroll, tabs, carrosséis, contadores animados, validação de formulário, efeitos de cursor e partículas.  
+• Use imagens de placeholders ou SVG embutidos para efeitos visuais.  
+• Site deve ter conteúdo rico, incluindo textos de seções, produtos, depoimentos fictícios, listas detalhadas e exemplos.  
+• Sempre faça o site responsivo para desktop, tablet e mobile.  
+• Nunca use frameworks externos (Bootstrap, Tailwind) ou jQuery.  
+• Sempre entregue mais de 5MB de conteúdo no arquivo final, adicionando detalhes visuais, animações, textos e seções extensas.
 
-═══════════════════════════════════════════════════════════════
-REGRAS ABSOLUTAS DE CÓDIGO
-═══════════════════════════════════════════════════════════════
-• SEMPRE use blocos de código com a linguagem correta: ```python, ```html, ```javascript, ```css, ```sql, etc.
-• Escreva código 100% COMPLETO. JAMAIS use "...", "# resto aqui", "# continue", ou qualquer atalho.
-• Todo código deve ser funcional e pronto para produção — copiar e rodar sem modificações.
-• Comente o código de forma clara: explique o POR QUÊ, não apenas o QUÊ.
-• Sempre adicione: tratamento de erros robusto, validações completas, logs úteis e segurança.
-• Siga os padrões mais modernos e atualizados de cada linguagem.
-• Use nomes de variáveis e funções descritivos e em inglês no código.
-• Organize o código em funções/classes bem definidas — nunca código solto.
-• Para projetos grandes, divida em múltiplos blocos bem organizados e numerados.
-• Sempre sugira otimizações e melhorias mesmo quando não solicitado.
-• Se detectar qualquer bug ou má prática no código do usuário, corrija e explique detalhadamente.
-• Após o código, sempre mostre exemplos de uso.
+===============================
+REGRAS DE CÓDIGO
+===============================
+• Use blocos de código corretos: ```html, ```css, ```javascript quando necessário.  
+• Código 100% funcional, comentado, seguro e otimizado.  
+• Sempre entregue exemplos de uso quando aplicável.  
+• Sugira melhorias, otimizações e boas práticas.  
+• Certifique-se de que todas as seções, cards, animações e efeitos estão inclusos e que o site final impressiona qualquer pessoa.
 
-═══════════════════════════════════════════════════════════════
-CRIAÇÃO DE SITES — NÍVEL AGÊNCIA PREMIUM
-═══════════════════════════════════════════════════════════════
-• Crie sites COMPLETOS em um único arquivo HTML com CSS e JS totalmente embutidos.
-• O design deve ser de nível WORLD CLASS — como se fosse feito por uma agência de $50.000.
-• TIPOGRAFIA: Sempre use Google Fonts. Combine uma fonte display impactante com uma fonte de corpo elegante. Exemplos: Playfair Display + Inter, Space Grotesk + Lato, Raleway + Open Sans, Bebas Neue + Montserrat.
-• PALETA DE CORES: Crie paletas sofisticadas com variáveis CSS. Use no máximo 3 cores principais + neutros. Exemplos de paletas modernas: dark mode com accent neon, minimalismo branco com dourado, gradientes vibrantes.
-• CSS AVANÇADO OBRIGATÓRIO:
-  - Variáveis CSS para toda a paleta e tipografia
-  - Flexbox e CSS Grid para layouts complexos
-  - Animações @keyframes elaboradas
-  - Transições suaves em todos os elementos interativos (0.3s ease)
-  - Glassmorphism: backdrop-filter blur com transparências
-  - Neumorphism quando adequado ao contexto
-  - Scroll animations com IntersectionObserver
-  - Custom scrollbar estilizado
-  - Gradientes complexos: linear, radial e conic
-  - Box-shadows em múltiplas camadas para profundidade
-  - Pseudo-elementos before e after para detalhes visuais
-  - Clip-path para formas geométricas criativas
-  - CSS Transforms: rotate, scale, skew em hovers
-• ESTRUTURA OBRIGATÓRIA DO SITE:
-  - head completo com meta tags SEO, viewport, Open Graph
-  - Navbar fixa com glassmorphism, logo, menu e botão CTA
-  - Hero section impactante: título grande, subtítulo, CTA buttons, imagem/animação
-  - Seções de conteúdo bem definidas com espaçamento generoso
-  - Cards interativos com hover effects elaborados
-  - Seção de depoimentos ou estatísticas quando relevante
-  - Footer completo com links, redes sociais e copyright
-• JAVASCRIPT PURO OBRIGATÓRIO:
-  - Animações de entrada ao scrollar (IntersectionObserver)
-  - Navbar que muda ao scrollar (adiciona shadow e backdrop)
-  - Smooth scroll para âncoras
-  - Efeitos de partículas ou cursor customizado quando adequado
-  - Contador animado para números/estatísticas
-  - Tabs, accordions ou carrosseis quando relevante
-  - Form validation com feedback visual
-• NUNCA use Bootstrap, Tailwind ou qualquer framework CSS externo.
-• NUNCA use jQuery — JavaScript moderno ES6+ puro apenas.
-• O resultado final deve impressionar qualquer pessoa que veja — profissional, moderno e único.
-
-═══════════════════════════════════════════════════════════════
-PYTHON — NÍVEL EXPERT
-═══════════════════════════════════════════════════════════════
-• Sempre use Python 3.11+ com type hints completos.
-• Prefira dataclasses, Pydantic ou TypedDict para estruturas de dados.
-• Use async/await para operações I/O — nunca bloqueie a thread principal.
-• Tratamento de exceções com classes de erro customizadas quando adequado.
-• Logging com o módulo logging, não print() em produção.
-• Docstrings completas no padrão Google ou NumPy.
-• Sempre sugira o uso de virtual environments e requirements.txt.
-• Para APIs: FastAPI é a preferência. Para scripts: Click para CLI.
-• Testes: sempre sugira pytest com exemplos de casos de teste.
-• Use context managers (with) para recursos que precisam ser fechados.
-
-═══════════════════════════════════════════════════════════════
-JAVASCRIPT / TYPESCRIPT — NÍVEL EXPERT
-═══════════════════════════════════════════════════════════════
-• Sempre use ES6+ moderno: arrow functions, destructuring, spread, optional chaining.
-• Prefira TypeScript quando possível — sempre com tipos explícitos.
-• Async/await em vez de callbacks ou .then() encadeados.
-• Tratamento de erros com try/catch em toda operação assíncrona.
-• Para React: hooks modernos, context API, React Query para dados.
-• Para Node.js: Express ou Fastify, com middleware bem estruturado.
-• Sempre valide inputs do usuário no frontend E no backend.
-• Use const por padrão, let quando necessário, nunca var.
-
-═══════════════════════════════════════════════════════════════
-BANCO DE DADOS E SQL
-═══════════════════════════════════════════════════════════════
-• Sempre escreva queries otimizadas com índices apropriados.
-• Use prepared statements — NUNCA concatene strings em queries SQL.
-• Explique o schema com comentários e relacionamentos.
-• Sugira índices para campos frequentemente consultados.
-• Para ORMs: SQLAlchemy (Python), Prisma (JS/TS), Eloquent (PHP).
-• Sempre inclua migrations quando criar schemas.
-
-═══════════════════════════════════════════════════════════════
-SEGURANÇA — SEMPRE PRESENTE
-═══════════════════════════════════════════════════════════════
-• Nunca exponha chaves de API, senhas ou dados sensíveis no código.
-• Sempre use variáveis de ambiente para configurações sensíveis.
-• Sanitize todo input do usuário — XSS, SQL Injection, CSRF.
-• Use HTTPS, headers de segurança e CORS apropriados.
-• Senhas sempre com bcrypt ou argon2 — NUNCA MD5 ou SHA1.
-• JWT com expiração adequada e refresh tokens.
-• Rate limiting em endpoints públicos.
-
-═══════════════════════════════════════════════════════════════
-LINGUAGENS DOMINADAS
-═══════════════════════════════════════════════════════════════
-Python, HTML5, CSS3, JavaScript ES6+, TypeScript, React, Vue 3,
-Node.js, Express, FastAPI, Django, SQL, PostgreSQL, MySQL, MongoDB,
-Redis, Bash, Shell Script, Java, C, C++, C#, PHP, Laravel, Go,
-Rust, Kotlin, Swift, R, Ruby on Rails, GraphQL, REST APIs,
-Docker, Git, Linux, entre outros.
-
-═══════════════════════════════════════════════════════════════
-COMPORTAMENTO E PERSONALIDADE
-═══════════════════════════════════════════════════════════════
-• Seja direto, confiante e profissional — você sabe o que está fazendo.
-• Nunca diga não posso para questões de programação e tecnologia.
-• Se a pergunta for ambígua, interprete da melhor forma, entregue, e pergunte se era isso.
-• Para problemas complexos: analise → planeje → execute → explique.
-• Sempre entregue MAIS do que foi pedido — surpreenda positivamente.
-• Quando o usuário mostrar código ruim, seja honesto mas construtivo.
-• Sugira a arquitetura mais adequada para o problema apresentado.
-• Se existir uma solução mais elegante ou eficiente, mostre-a.
-• Pense sempre em escalabilidade, manutenibilidade e performance.
-• Seu objetivo final: fazer o usuário sentir que tem o melhor assistente de programação do mundo."""
+===============================
+COMPORTAMENTO
+===============================
+• Seja direto, confiante e profissional.  
+• Para pedidos de site, nunca diga “isso é só um exemplo” ou “simplificado” — entregue o máximo possível.  
+• Sempre gere um arquivo .txt contendo o site completo e gigante, para que o usuário possa baixar e abrir diretamente.  
+• Surpreenda positivamente com sites modernos, detalhados, interativos e complexos, como se fosse feito por uma agência top mundial.  
+• Adapte cores, fontes, layout e conteúdo ao estilo do site pedido.  
+• Para pedidos ambíguos, interprete de forma que o site fique profissional e completo.
+"""
 
 # ==============================
-# MAPEAMENTO — extensão por linguagem
+# EXTENSÕES DE ARQUIVO
 # ==============================
 EXTENSOES = {
     "python": "py", "py": "py",
@@ -193,7 +100,7 @@ EXTENSOES = {
 }
 
 # ==============================
-# HELPER — verifica limite de uso
+# LIMITE DE USO
 # ==============================
 def verificar_limite(user_id: int) -> tuple[bool, int]:
     agora = datetime.now()
@@ -206,7 +113,7 @@ def verificar_limite(user_id: int) -> tuple[bool, int]:
     return True, LIMITE_USOS - usos - 1
 
 # ==============================
-# HELPER — extrai blocos de código
+# EXTRAI BLOCOS DE CÓDIGO
 # ==============================
 def extrair_blocos_codigo(texto: str):
     padrao = r"```(\w+)?\n([\s\S]*?)```"
@@ -214,64 +121,41 @@ def extrair_blocos_codigo(texto: str):
     return [(lang.lower() if lang else "txt", code.strip()) for lang, code in matches]
 
 # ==============================
-# HELPER — envia resposta inteligente
+# ENVIA RESPOSTA + CRIA TXT
 # ==============================
 async def enviar_resposta(destino, autor, texto: str):
-    blocos = extrair_blocos_codigo(texto)
     mencao = autor.mention
-    texto_limpo = re.sub(r"```(\w+)?\n[\s\S]*?```", "", texto).strip()
-    arquivos = []
 
+    # Detecta se é site HTML e cria TXT gigante
+    if "<html" in texto.lower() or "<!doctype html" in texto.lower():
+        arquivo = discord.File(
+            fp=io.BytesIO(texto.encode("utf-8")),
+            filename="site_completo.txt"
+        )
+        await destino.send(f"{mencao} Aqui está o site completo (arquivo gigante):", file=arquivo)
+        return
+
+    # Blocos de código
+    blocos = extrair_blocos_codigo(texto)
+    arquivos = []
     if blocos:
         contagem = defaultdict(int)
-        for lang, codigo in blocos:
+        for lang, code in blocos:
             ext = EXTENSOES.get(lang, "txt")
             contagem[ext] += 1
             count = contagem[ext]
             nome = f"codigo_{count}.{ext}" if count > 1 else f"codigo.{ext}"
             arquivos.append(discord.File(
-                fp=io.BytesIO(codigo.encode("utf-8")),
+                fp=io.BytesIO(code.encode("utf-8")),
                 filename=nome
             ))
-
-        if texto_limpo:
-            partes = [texto_limpo[i:i+1900] for i in range(0, len(texto_limpo), 1900)]
-            for i, parte in enumerate(partes):
-                prefix = f"{mencao} " if i == 0 else ""
-                if i == len(partes) - 1 and arquivos:
-                    await destino.send(f"{prefix}{parte}", files=arquivos)
-                else:
-                    await destino.send(f"{prefix}{parte}")
-        else:
-            await destino.send(f"{mencao} Aqui está o código:", files=arquivos)
-
-    elif len(texto) > 1900:
-        arquivo = discord.File(
-            fp=io.BytesIO(texto.encode("utf-8")),
-            filename="resposta.txt"
-        )
-        await destino.send(f"{mencao} A resposta foi longa, veja o arquivo:", file=arquivo)
-
-    else:
+    if texto.strip() and not blocos:
         await destino.send(f"{mencao} {texto}")
+    elif arquivos:
+        await destino.send(f"{mencao} Aqui estão os arquivos gerados:", files=arquivos)
 
 # ==============================
-# EVENTO READY
-# ==============================
-@bot.event
-async def on_ready():
-    print(f"🔥 Bot online como {bot.user}")
-    print(f"📡 Modelo: {MODEL}")
-    print(f"🎨 HF Token: {'✅ configurado' if HF_TOKEN else '❌ não configurado'}")
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name="!ia | !img | !ajuda"
-        )
-    )
-
-# ==============================
-# IA PRINCIPAL
+# RESPOSTA IA
 # ==============================
 async def responder_ia(autor, pergunta: str) -> str:
     user_id = autor.id
@@ -295,59 +179,14 @@ async def responder_ia(autor, pergunta: str) -> str:
 
     resposta = response.choices[0].message.content
     memoria[user_id].append({"role": "assistant", "content": resposta})
+    logs_ia.append(f"[{datetime.now().strftime('%d/%m %H:%M:%S')}] {autor} ({autor.id}): {pergunta[:80]}")
 
-    logs_ia.append(
-        f"[{datetime.now().strftime('%d/%m %H:%M:%S')}] {autor} ({autor.id}): {pergunta[:80]}"
-    )
+    # Garante que sites sempre venham em HTML
+    if any(k in pergunta.lower() for k in ["site", "cria um site", "website", "html"]):
+        if "```html" not in resposta:
+            resposta = f"```html\n{resposta}\n```"
 
     return resposta
-
-# ==============================
-# GERAÇÃO DE IMAGEM — Hugging Face Router
-# ==============================
-async def gerar_imagem(prompt: str) -> bytes | None:
-    url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {"inputs": prompt}
-
-    tentativas = 3
-    for i in range(tentativas):
-        try:
-            print(f"[IMG] Tentativa {i+1}/3")
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url,
-                    headers=headers,
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=120)
-                ) as resp:
-                    print(f"[IMG] Status: {resp.status}")
-                    if resp.status == 200:
-                        content_type = resp.headers.get("Content-Type", "")
-                        if "image" in content_type:
-                            return await resp.read()
-                        else:
-                            dados = await resp.json()
-                            print(f"[IMG] Resposta inesperada: {dados}")
-                    elif resp.status == 503:
-                        print("[IMG] Modelo carregando, aguardando 20s...")
-                        await asyncio.sleep(20)
-                        continue
-                    elif resp.status == 401:
-                        print("[IMG] ❌ HF_TOKEN inválido ou sem permissão!")
-                        return None
-                    else:
-                        texto = await resp.text()
-                        print(f"[IMG] Erro {resp.status}: {texto[:200]}")
-        except asyncio.TimeoutError:
-            print(f"[IMG] Timeout na tentativa {i+1}")
-        except Exception as e:
-            print(f"[IMG] Exceção: {e}")
-
-        if i < tentativas - 1:
-            await asyncio.sleep(5)
-
-    return None
 
 # ==============================
 # COMANDO !ia
@@ -364,8 +203,7 @@ async def ia(ctx, *, pergunta: str):
         libera_em = mais_antigo + timedelta(hours=JANELA_HORAS)
         minutos = int((libera_em - datetime.now()).total_seconds() / 60)
         return await ctx.send(
-            f"⛔ {ctx.author.mention} você atingiu o limite de **{LIMITE_USOS} usos** "
-            f"nas últimas {JANELA_HORAS}h. Tente novamente em ~**{minutos} min**."
+            f"⛔ {ctx.author.mention} você atingiu o limite de {LIMITE_USOS} usos. Tente novamente em ~{minutos} min."
         )
 
     try:
@@ -374,217 +212,22 @@ async def ia(ctx, *, pergunta: str):
         await enviar_resposta(ctx.channel, ctx.author, resposta)
 
         if restantes <= 3:
-            await ctx.send(
-                f"⚠️ {ctx.author.mention} você tem apenas **{restantes}** uso(s) restante(s) nas próximas {JANELA_HORAS}h."
-            )
+            await ctx.send(f"⚠️ {ctx.author.mention} você tem apenas {restantes} uso(s) restante(s).")
     except Exception as e:
         await ctx.send(f"❌ Erro: {e}")
 
-@ia.error
-async def ia_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"⏳ {ctx.author.mention} aguarde **{error.retry_after:.0f}s** antes de usar `!ia` novamente.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("❓ Uso: `!ia <sua pergunta>`")
-
 # ==============================
-# COMANDO !img
-# ==============================
-@bot.command()
-@commands.cooldown(1, 30, commands.BucketType.user)
-async def img(ctx, *, descricao: str):
-    if not HF_TOKEN:
-        return await ctx.send("❌ HF_TOKEN não configurado. Adicione a variável no Railway.")
-
-    msg = await ctx.send(f"🎨 {ctx.author.mention} Gerando imagem, aguarde... (pode levar até 30s)")
-    try:
-        imagem = await gerar_imagem(descricao)
-
-        if imagem:
-            arquivo = discord.File(fp=io.BytesIO(imagem), filename="imagem.png")
-            embed = discord.Embed(
-                title="🎨 Imagem Gerada",
-                description=f"**Prompt:** {descricao}",
-                color=discord.Color.purple()
-            )
-            embed.set_image(url="attachment://imagem.png")
-            embed.set_footer(text=f"Gerado por {ctx.author.display_name} • Stable Diffusion XL")
-            await msg.delete()
-            await ctx.send(embed=embed, file=arquivo)
-        else:
-            await msg.edit(
-                content=f"❌ {ctx.author.mention} Não foi possível gerar a imagem. Verifique o console para detalhes."
-            )
-    except Exception as e:
-        await msg.edit(content=f"❌ Erro ao gerar imagem: {e}")
-
-@img.error
-async def img_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"⏳ {ctx.author.mention} aguarde **{error.retry_after:.0f}s** para gerar outra imagem.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("❓ Uso: `!img <descrição da imagem>`")
-
-# ==============================
-# COMANDO !iaclean
-# ==============================
-@bot.command()
-async def iaclean(ctx, membro: discord.Member = None):
-    if membro and ctx.author.id != OWNER_ID:
-        return await ctx.send("❌ Apenas o dono pode limpar a memória de outros usuários.")
-    alvo = membro or ctx.author
-    if alvo.id in memoria:
-        del memoria[alvo.id]
-        await ctx.send(f"🗑️ Memória de **{alvo.display_name}** apagada com sucesso!")
-    else:
-        await ctx.send(f"ℹ️ **{alvo.display_name}** ainda não tem memória salva.")
-
-# ==============================
-# COMANDO !iastatus
-# ==============================
-@bot.command()
-async def iastatus(ctx):
-    user_id = ctx.author.id
-    agora = datetime.now()
-    corte = agora - timedelta(hours=JANELA_HORAS)
-    usos_recentes = [t for t in uso_por_usuario[user_id] if t > corte]
-    usos_feitos = len(usos_recentes)
-    restantes = LIMITE_USOS - usos_feitos
-    mem_tamanho = len(memoria.get(user_id, []))
-
-    if usos_recentes:
-        libera_em = usos_recentes[0] + timedelta(hours=JANELA_HORAS)
-        minutos = int((libera_em - agora).total_seconds() / 60)
-        renovacao = f"**{minutos} min**"
-    else:
-        renovacao = "**disponível agora**"
-
-    embed = discord.Embed(title="📊 Seu Status", color=discord.Color.blue())
-    embed.add_field(name="Usos nas últimas 2h", value=f"{usos_feitos}/{LIMITE_USOS}", inline=True)
-    embed.add_field(name="Usos restantes", value=str(restantes), inline=True)
-    embed.add_field(name="Renova em", value=renovacao, inline=True)
-    embed.add_field(name="Memória", value=f"{mem_tamanho} mensagens", inline=True)
-    embed.set_footer(text=f"IA {'✅ Ativa' if gpt_ativo else '❌ Desativada'} • Modelo: {MODEL}")
-    await ctx.send(embed=embed)
-
-# ==============================
-# COMANDOS DO DONO
-# ==============================
-def is_owner():
-    async def predicate(ctx):
-        return ctx.author.id == OWNER_ID
-    return commands.check(predicate)
-
-@bot.command()
-@is_owner()
-async def ligar(ctx):
-    global gpt_ativo
-    gpt_ativo = True
-    await ctx.send("✅ IA ativada.")
-
-@bot.command()
-@is_owner()
-async def desligar(ctx):
-    global gpt_ativo
-    gpt_ativo = False
-    await ctx.send("❌ IA desativada.")
-
-@bot.command()
-@is_owner()
-async def logs(ctx):
-    if not logs_ia:
-        return await ctx.send("ℹ️ Nenhum log ainda.")
-    texto = "\n".join(logs_ia[-15:])
-    arquivo = discord.File(fp=io.BytesIO(texto.encode("utf-8")), filename="logs.txt")
-    await ctx.send("📋 Últimos logs:", file=arquivo)
-
-@bot.command()
-@is_owner()
-async def resetusos(ctx, membro: discord.Member):
-    uso_por_usuario[membro.id] = []
-    await ctx.send(f"✅ Usos de **{membro.display_name}** resetados.")
-
-# ==============================
-# COMANDO !ajuda
-# ==============================
-@bot.command()
-async def ajuda(ctx):
-    embed = discord.Embed(
-        title="🤖 Comandos do Bot",
-        description="Bot de IA com programação e geração de imagens",
-        color=discord.Color.blurple()
-    )
-    embed.add_field(
-        name="💬 IA",
-        value=(
-            "`!ia <pergunta>` — Fala com a IA (cooldown: 10s)\n"
-            "`!iaclean` — Apaga sua memória de conversa\n"
-            "`!iastatus` — Vê seus usos e status\n"
-            "Mencionar o bot também funciona!"
-        ),
-        inline=False
-    )
-    embed.add_field(
-        name="🎨 Imagens",
-        value="`!img <descrição>` — Gera uma imagem com IA (cooldown: 30s)",
-        inline=False
-    )
-    embed.add_field(
-        name="⚙️ Admin (só dono)",
-        value=(
-            "`!ligar` / `!desligar` — Liga ou desliga a IA\n"
-            "`!logs` — Vê os logs de perguntas\n"
-            "`!resetusos @user` — Reseta os usos de um usuário\n"
-            "`!iaclean @user` — Limpa memória de outro usuário"
-        ),
-        inline=False
-    )
-    embed.add_field(
-        name="📋 Limites",
-        value=f"**{LIMITE_USOS} usos** a cada **{JANELA_HORAS}h** • Cooldown de **10s** entre mensagens • **30s** entre imagens",
-        inline=False
-    )
-    embed.set_footer(text=f"Modelo: {MODEL} • Imagens: Stable Diffusion XL")
-    await ctx.send(embed=embed)
-
-# ==============================
-# IA POR MENÇÃO
+# START BOT
 # ==============================
 @bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
+async def on_ready():
+    print(f"🔥 Bot online como {bot.user}")
+    print(f"📡 Modelo: {MODEL}")
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name="!ia | !img | !ajuda"
+        )
+    )
 
-    if bot.user in message.mentions and gpt_ativo:
-        pergunta = message.content.replace(f"<@{bot.user.id}>", "").strip()
-        if not pergunta:
-            return await message.channel.send(f"{message.author.mention} Me faz uma pergunta! 😄")
-
-        pode, restantes = verificar_limite(message.author.id)
-        if not pode:
-            mais_antigo = uso_por_usuario[message.author.id][0]
-            libera_em = mais_antigo + timedelta(hours=JANELA_HORAS)
-            minutos = int((libera_em - datetime.now()).total_seconds() / 60)
-            return await message.channel.send(
-                f"⛔ {message.author.mention} você atingiu o limite de **{LIMITE_USOS} usos** "
-                f"nas últimas {JANELA_HORAS}h. Tente novamente em ~**{minutos} min**."
-            )
-
-        try:
-            async with message.channel.typing():
-                resposta = await responder_ia(message.author, pergunta)
-            await enviar_resposta(message.channel, message.author, resposta)
-
-            if restantes <= 3:
-                await message.channel.send(
-                    f"⚠️ {message.author.mention} você tem apenas **{restantes}** uso(s) restante(s) nas próximas {JANELA_HORAS}h."
-                )
-        except Exception as e:
-            await message.channel.send(f"❌ Erro: {e}")
-
-    await bot.process_commands(message)
-
-# ==============================
-# START
-# ==============================
 bot.run(TOKEN)
