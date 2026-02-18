@@ -25,7 +25,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 gpt_ativo = True
 memoria = {}
 logs_ia = []
-economia = {}
 
 # ==============================
 # EVENTO READY
@@ -40,7 +39,6 @@ async def on_ready():
 # ==============================
 
 async def responder_ia(ctx, pergunta):
-
     global logs_ia
 
     if ctx.author.id not in memoria:
@@ -60,7 +58,6 @@ async def responder_ia(ctx, pergunta):
     )
 
     resposta = response.choices[0].message.content
-
     memoria[ctx.author.id].append({"role": "assistant", "content": resposta})
 
     logs_ia.append(
@@ -70,20 +67,18 @@ async def responder_ia(ctx, pergunta):
     return resposta
 
 # ==============================
-# COMANDO IA
+# COMANDO !IA
 # ==============================
 
 @bot.command()
 async def ia(ctx, *, pergunta: str):
-
     if not gpt_ativo:
-        return await ctx.send("❌ IA está desativada pelo dono.")
-
-    await ctx.send("🤖 Pensando...")
+        return await ctx.send(f"❌ IA está desativada pelo dono.")
 
     try:
         resposta = await responder_ia(ctx, pergunta)
-        await ctx.send(resposta)
+        # Responde marcando a pessoa
+        await ctx.send(f"{ctx.author.mention} {resposta}")
 
     except Exception as e:
         await ctx.send(f"Erro: {e}")
@@ -94,102 +89,18 @@ async def ia(ctx, *, pergunta: str):
 
 @bot.event
 async def on_message(message):
-
-    global gpt_ativo
-
     if message.author.bot:
         return
 
     if bot.user in message.mentions and gpt_ativo:
-        pergunta = message.content.replace(f"<@{bot.user.id}>", "")
+        pergunta = message.content.replace(f"<@{bot.user.id}>", "").strip()
         resposta = await responder_ia(message, pergunta)
-        await message.channel.send(resposta)
+        await message.channel.send(f"{message.author.mention} {resposta}")
 
     await bot.process_commands(message)
-
-# ==============================
-# COMANDOS DONO
-# ==============================
-
-def is_owner(ctx):
-    return ctx.author.id == OWNER_ID
-
-@bot.command()
-async def ongpt(ctx):
-    global gpt_ativo
-    if not is_owner(ctx):
-        return
-    gpt_ativo = True
-    await ctx.send("✅ IA ativada.")
-
-@bot.command()
-async def offgpt(ctx):
-    global gpt_ativo
-    if not is_owner(ctx):
-        return
-    gpt_ativo = False
-    await ctx.send("⛔ IA desativada.")
-
-@bot.command()
-async def logsia(ctx):
-    if not is_owner(ctx):
-        return
-
-    if not logs_ia:
-        return await ctx.send("Sem logs ainda.")
-
-    ultimos = "\n".join(logs_ia[-10:])
-    await ctx.send(f"```{ultimos}```")
-
-# ==============================
-# ECONOMIA
-# ==============================
-
-@bot.command()
-async def saldo(ctx):
-
-    user = ctx.author.id
-
-    if user not in economia:
-        economia[user] = 100
-
-    await ctx.send(f"💰 Seu saldo: {economia[user]} moedas")
-
-@bot.command()
-async def daily(ctx):
-
-    user = ctx.author.id
-
-    if user not in economia:
-        economia[user] = 100
-
-    economia[user] += 50
-
-    await ctx.send("🎁 Você ganhou 50 moedas!")
-
-# ==============================
-# MODERAÇÃO
-# ==============================
-
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, member: discord.Member, *, reason=None):
-    await member.kick(reason=reason)
-    await ctx.send(f"{member} foi kickado.")
-
-@bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member, *, reason=None):
-    await member.ban(reason=reason)
-    await ctx.send(f"{member} foi banido.")
 
 # ==============================
 # START
 # ==============================
 
 bot.run(TOKEN)
-
-
-
-
-
