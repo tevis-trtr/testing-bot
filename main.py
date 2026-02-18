@@ -196,7 +196,7 @@ async def responder_ia(autor, pergunta: str) -> str:
     ] + memoria[user_id]
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="deepseek-r1-distill-llama-70b",
         messages=messages,
         temperature=0.7,
         max_tokens=4096  # aumentado para suportar código longo
@@ -307,4 +307,5 @@ async def on_message(message):
 # START
 # ==============================
 bot.run(TOKEN)
+
 
